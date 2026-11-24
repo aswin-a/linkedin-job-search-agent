@@ -29,7 +29,7 @@ Job folder: <Drive link>
 APPROVED TO APPLY - <Company> - <Role>
 ```
 
-Paste into a new project chat to apply. Deleting the last line pauses it: the agent will prepare but not apply.
+Paste into a new project chat to apply. Deleting the last line pauses it: the agent will prepare but not apply. The line only counts once *I* send it; the copy in the agent's own output, the tracker or a Doc never counts. See the gate's arm / fire / disarm rules in [system-prompt.md](system-prompt.md#approval-gate-non-negotiable).
 
 ## Phrases the agent listens for
 
@@ -39,8 +39,9 @@ Paste into a new project chat to apply. Deleting the last line pauses it: the ag
 | `UPDATE MASTER` / `UPDATE MASTER 1, 3` | Apply all / only those proposed master-resume additions, and log them |
 | *(any change request)* | Edit the FINAL Doc in place with targeted replacements; reply with only what changed |
 | `COVER LETTER` | Write a cover letter now, even if not required |
-| `APPROVED TO APPLY - <Company> - <Role>` | Unlocks the apply procedure for this job only, in this thread only |
-| `SUBMIT` | Final click after I review the filled form (also approves the HR message draft) |
+| `APPROVED TO APPLY - <Company> - <Role>` | Arms the approval gate for this job only, in this thread only. Must be its own line in my message |
+| `SUBMIT` | Final click after I review the filled form (also approves the HR message draft). Must be my whole latest message |
+| `STOP` / `CANCEL` | Disarms the gate and stops whatever is in progress; nothing is submitted or sent. Also the answer to an InMail cost prompt |
 | `SEND` | Approves a LinkedIn message that would use an InMail credit |
 | `NO MESSAGE` | Skip HR outreach for this job |
 | `SKIP` | Status → Skipped, archive in LinkedIn job tracker; no application |

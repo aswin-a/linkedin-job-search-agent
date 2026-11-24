@@ -22,7 +22,7 @@ Google Sheet, tab `Jobs`. One row per job. The agent always finds columns **by h
 | Applied on | APPLY | Date |
 | Application type | APPLY | Easy Apply / ATS |
 | Follow-up date | manual | |
-| Notes | all | Fit breakdown, LinkedIn sync log, HR outreach log |
+| Notes | all | Fit breakdown, LinkedIn sync log, HR outreach log, application reference number, unconfirmed-submit log |
 | Kickoff message | SEARCH | Ready-to-paste `MODE: JOB` kickoff |
 | Likely interview questions | JOB | 10 numbered questions in one cell, kept in step with resume edits |
 | Cover letter | JOB / APPLY | Drive link, or `not required (<reason>)` |
