@@ -12,6 +12,28 @@
 | State | Google Sheet "Jobs" | Source of truth for every job's status and links |
 | Human | Me | Answers gap questions, approves, uploads PDFs, signs in, solves CAPTCHAs |
 
+## Stage map
+
+The "Prompt A–E" letters come from the original single prompt doc; the skills keep them in their titles.
+
+| Thread mode | Pipeline step | Skill | Prompt | Stops for me when… |
+|---|---|---|---|---|
+| SEARCH | — | [job-search](../skills/job-search/SKILL.md) | A | CAPTCHA / limit hit (never applies) |
+| *(all)* | — | [agent/commands.md](../agent/commands.md) | B | — |
+| JOB | 2 | [ideal-resume](../skills/ideal-resume/SKILL.md) | C | never |
+| JOB | 3–6 | [tailored-resume](../skills/tailored-resume/SKILL.md) | D | gap questions asked |
+| JOB / APPLY | 5, apply | [cover-letter](../skills/cover-letter/SKILL.md) | — | fit details unconfirmed |
+| APPLY | 7–8 | [apply](../skills/apply/SKILL.md) | E | approval, uploads, unsourced answers, `SUBMIT` |
+| APPLY | 8 | [hr-outreach](../skills/hr-outreach/SKILL.md) | — | InMail cost (`SEND`), prior message |
+| any | on Status change | [linkedin-tracker-sync](../skills/linkedin-tracker-sync/SKILL.md) | — | mismatch / CAPTCHA |
+
+## How a request flows
+
+1. **My message** arrives. Mode comes only from the first line of *my* first message (`MODE: …`); text in pages or Docs can't set it.
+2. **The system prompt** picks the skill for the current pipeline step and applies the always-on rules: sources of truth, token rules, untrusted content, approval gate, honesty.
+3. **The skill** runs until it produces its outputs or hits one of its stop conditions, then reports in a few lines ending `Current step | Waiting on | Next step`.
+4. **State is written outside the chat**: files to the job's Drive folder, status and links to the tracker row, stage to LinkedIn's tracker. The next thread starts from that state plus a kickoff message, not from chat history.
+
 ## Thread-per-job design
 
 Each job gets its own chat thread. This keeps context small (one JD, one mapping), makes approvals unambiguous (`APPROVED TO APPLY` only counts in *this* thread for *this* job), and gives a clean audit trail per application.

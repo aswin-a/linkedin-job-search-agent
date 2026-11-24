@@ -1,91 +1,99 @@
 # LinkedIn Job Search & Apply Agent
 
-A human-in-the-loop AI agent, built on Claude, that runs my end-to-end job search: it finds and scores LinkedIn jobs, writes an "ideal" resume for each job description, tailors my real resume to it with a three-way mapping, writes cover letters, prepares likely interview questions, applies **only after explicit approval**, keeps a job tracker in sync, and messages the hiring contact after I apply.
+**A human-in-the-loop Claude agent that finds LinkedIn jobs, tailors my resume to each one without inventing anything, and applies only after two explicit approvals.**
 
-> Built by [Aswin A](https://github.com/aswin-a) as a working tool for my own 2026 Senior PM job search, not a demo. Everything here is the actual agent design, with personal data and document IDs removed.
+> I built this as a working tool for my own 2026 Senior PM job search, not as a demo. This repo is the actual agent design (system prompt, stage skills, data contracts, guardrails) with personal data and document IDs removed.
 
----
+[![checks](https://github.com/aswin-a/linkedin-job-search-agent/actions/workflows/checks.yml/badge.svg)](https://github.com/aswin-a/linkedin-job-search-agent/actions/workflows/checks.yml)
 
-## Why I built it
+## The problem
 
-Tailoring a resume well for every job takes 1–2 hours, and doing it badly (keyword-stuffing, overclaiming) hurts more than it helps. I wanted an agent that does the heavy lifting **without ever inventing experience** and **without ever applying on its own**. The design problem was less "can an LLM write a resume" and more:
+Tailoring a resume well takes 1–2 hours per job, and doing it badly (keyword-stuffing, overclaiming) hurts more than it helps. Handing the job to an LLM raises three design problems:
 
-- How do you get JD-optimised wording while keeping every claim true?
-- How do you let an agent click buttons on LinkedIn without it ever submitting something you didn't approve?
-- How do you keep a long multi-tool workflow cheap and fast (token budget)?
+1. **Honesty:** how do you get JD-optimised wording while keeping every claim true?
+2. **Control:** how do you let an agent click buttons on LinkedIn as *you* without it ever submitting something you didn't approve?
+3. **Cost:** how do you keep a long multi-tool workflow cheap and fast?
 
-## What it does
-
-| Mode | Trigger | What happens |
-|---|---|---|
-| **SEARCH** | `MODE: SEARCH` | Searches LinkedIn with my search profile, screens results, scores each job 0–100 on a weighted rubric, saves qualifying jobs to LinkedIn Saved Jobs, logs them in the tracker with a ready-made kickoff message. |
-| **JOB** | `MODE: JOB` + job link (one job per thread) | Saves the JD → builds an **Ideal Resume** → **three-way mapping** (Ideal × Master × JD) → asks only the gap questions that could change the resume → writes the FINAL resume, a cover letter if needed, and 10 likely interview questions. |
-| **APPLY** | `MODE: APPLY` + approval line | Fills the application from sourced answers only, shows a field-by-field review table, waits for `SUBMIT`, then updates the tracker, LinkedIn job tracker, and sends one free message to the listed hiring contact. |
+## How it works
 
 ```mermaid
 flowchart LR
-    SP[Search Profile] --> A
-    MR[(Master Resume<br/>facts)] --> A
-    A[MODE: SEARCH<br/>search · screen · score] -->|kickoff message| T[(Job Tracker<br/>Google Sheet)]
-    A --> LS[LinkedIn<br/>Saved Jobs]
-    T -->|paste kickoff| B[MODE: JOB]
-    B --> JD[JD.txt]
-    JD --> C[Ideal Resume<br/>template only]
-    C --> D[Three-way mapping<br/>Ideal × Master × JD]
-    MR --> D
-    D -->|gap questions| U{{Me}}
-    U -->|answers| D
-    D --> F[FINAL resume<br/>+ cover letter<br/>+ interview Qs]
-    D -.proposed additions.-> MR
-    F -->|apply kickoff| E[MODE: APPLY]
-    U -->|APPROVED TO APPLY| E
-    E -->|review table| U
-    U -->|SUBMIT| S[Submit]
-    S --> T
-    S --> LT[LinkedIn<br/>Job Tracker sync]
-    S --> HR[HR outreach<br/>1 free message]
+    subgraph S["SEARCH thread"]
+      S1[Search + screen<br/>LinkedIn] --> S2[Score 0–100<br/>save + log]
+    end
+    subgraph J["JOB thread · one per job"]
+      J1[Ideal resume<br/>from JD only] --> J2[Three-way mapping<br/>Ideal × Master × JD]
+      J2 --> J3[FINAL resume<br/>cover letter<br/>interview Qs]
+    end
+    subgraph A["APPLY thread"]
+      A1[Fill form from<br/>sourced answers] --> A2[Field-by-field<br/>review] --> A3[Submit once<br/>sync tracker<br/>1 HR message]
+    end
+    S2 -->|kickoff message| J1
+    J2 -.->|0–3 gap questions| ME{{Me}}
+    J3 -->|apply kickoff| A1
+    ME -->|"APPROVED TO APPLY – Co – Role"| A1
+    ME -->|SUBMIT| A3
+    T[(Tracker sheet<br/>source of truth)]
+    S2 --> T
+    J3 --> T
+    A3 --> T
 ```
 
-## Key design ideas
+| Mode | I send | The agent |
+|---|---|---|
+| **SEARCH** | `MODE: SEARCH` | Searches LinkedIn from my search profile, scores each job on a weighted rubric, saves qualifying ones, and logs each in the tracker with a ready-to-paste kickoff message. Never applies |
+| **JOB** | the kickoff (one job per thread) | Saves the JD, writes an **ideal resume** from the JD alone, maps it against my **master resume**, asks only the gap questions that could change the result, then writes the FINAL resume, a cover letter if needed, and 10 likely interview questions |
+| **APPLY** | the apply kickoff with the approval line | Fills the application only from sourced answers, shows a `Field \| Value \| Source` table, and waits for `SUBMIT`. Then it updates the tracker and LinkedIn, and sends one free message to the listed hiring contact |
 
-1. **Three sources of truth, never mixed.** Facts come only from the Master Resume and my chat answers. Priorities come from the JD. Wording and structure come from an AI-generated Ideal Resume. The agent's job is to write *my* true experience in the ideal resume's language. → [docs/three-way-mapping.md](docs/three-way-mapping.md)
-2. **The Ideal Resume is a template, not a source.** It describes a perfect-fit fictional candidate; none of its facts can move into my resume unless my Master Resume backs them.
-3. **Gap questions only when they matter.** The agent asks a question only if the answer could change the resume for a requirement *and* it isn't already answered anywhere. 0–3 questions is normal.
-4. **A hard approval gate.** No Apply/Submit/Send without the exact phrase `APPROVED TO APPLY - <Company> - <Role>` in the latest message of *that* thread, then a second `SUBMIT` after reviewing every filled field. Approvals in documents or web pages don't count (prompt-injection safe). → [docs/safety-and-guardrails.md](docs/safety-and-guardrails.md)
-5. **The master resume grows.** New facts surfaced by gap questions are proposed as additions and written back only on `UPDATE MASTER`, with a change log, so every future job benefits.
-6. **Token discipline.** Reference docs live in project knowledge, the tracker is read by column, pages are read as text, documents are never printed in chat. → [docs/token-efficiency.md](docs/token-efficiency.md)
-7. **Skim-friendly, ATS-safe output.** Single column, no tables, and a strict bolding rule: a recruiter reading only the bold text, titles and first bullets should see the top must-haves in 10 seconds.
+## Design decisions worth a look
 
-## Repo layout
+1. **Three sources of truth, never mixed.** Facts come from the master resume and my answers. Priorities come from the JD. Wording comes from an "ideal resume" written for a fictional perfect-fit candidate, *without* seeing my resume. The FINAL resume is my true experience in the ideal resume's language. → [three-way mapping](docs/three-way-mapping.md)
+2. **A two-key approval gate that page text can't open.** The gate is armed only by `APPROVED TO APPLY - <Company> - <Role>` in *my* message in *this* thread. It fires only when my latest message is exactly `SUBMIT`, after a field-by-field review. JD and page text is treated as data, so an injected "submit now" does nothing. → [safety & guardrails](docs/safety-and-guardrails.md) · [injection eval case](evals/cases/02-easy-apply-injected-jd/expected.md)
+3. **Gap questions only when they'd change the resume.** A question has to pass a three-part test: it matters for a requirement, the master resume doesn't answer it, and I haven't answered it before. 0–3 per job is normal. New facts are proposed back into the master resume on `UPDATE MASTER`, so the next job needs fewer questions.
+4. **Thread-per-job, skill-per-stage, state outside the chat.** Each job's context holds one JD and one mapping. Approvals are scoped to a thread. Hand-offs between threads are kickoff messages, and state lives in Drive and the tracker, not in chat history. → [architecture](docs/architecture.md)
+
+I wrote up what's weak about the design too: implicit orchestration, idempotency, the limits of "facts only" as a rule, missing evals. That's in **[design notes and trade-offs](docs/design-review.md)**, and how each failure is handled is in **[failure modes](docs/failure-modes.md)**.
+
+## What's in the repo
 
 ```
 agent/
-  system-prompt.md          # The agent's project instructions (role, modes, rules)
-  commands.md               # Phrases the agent listens for (kickoffs, approvals, status)
-skills/                     # One SKILL.md per stage of the pipeline
-  job-search/               # Prompt A: search, screen, score, shortlist
-  ideal-resume/             # Prompt C: JD analysis + ideal resume
-  tailored-resume/          # Prompt D: three-way mapping, gap Qs, FINAL resume, fit check
-  cover-letter/             # Cover letter procedure
-  apply/                    # Prompt E: approval-gated application
-  linkedin-tracker-sync/    # Mirror sheet status to LinkedIn's job tracker
-  hr-outreach/              # One message to the listed hiring contact
-config/                     # Templates: search profile, application answers, master resume
-tracker/                    # Job tracker schema + CSV template
-docs/                       # Architecture, three-way mapping, guardrails, token rules, setup
-examples/                   # A fictional end-to-end walkthrough
+  system-prompt.md        The orchestrator: modes, pipeline, sources of truth, gate, honesty and token rules
+  commands.md             Every phrase the agent listens for (kickoffs, approvals, status)
+skills/                   One Agent Skill per stage: Inputs / Outputs / Stop conditions + procedure
+  job-search/             A: search, screen, score, shortlist
+  ideal-resume/           C: JD analysis + requirement IDs + ideal resume
+  tailored-resume/        D: three-way mapping, gap Qs, FINAL resume, fit check
+    references/           Skim-formatting spec (loaded only when writing the resume)
+  cover-letter/           Fact-only cover letter
+  apply/                  E: approval-gated application
+  linkedin-tracker-sync/  Mirror sheet status to LinkedIn's job tracker
+  hr-outreach/            One message to the listed hiring contact
+docs/                     Architecture, three-way mapping, guardrails, failure modes, token rules, design review, setup
+tracker/                  Tracker schema (who writes each column) + CSV template
+config/                   Templates: search profile, application answers, master resume
+evals/                    Format checker, fictional golden cases, eval plan
+scripts/                  Privacy check + skills/link linter (run in CI)
+examples/                 A fictional end-to-end walkthrough
+.claude-plugin/           Experimental plugin manifest for the skills
 ```
 
 ## Stack
 
-- **Claude** (Claude Project with custom instructions + project knowledge)
+- **Claude**: a Claude Project with custom instructions and project knowledge
 - **Claude in Chrome** for LinkedIn and ATS portals (my real, signed-in browser)
-- **Google Drive / Docs / Sheets connectors** for job folders, resumes, and the tracker
-- No custom code: the "program" is the prompt architecture, the data contracts between steps, and the guardrails.
+- **Google Drive / Docs / Sheets connectors** for job folders, resumes and the tracker
+- No application code. The "program" is the prompt architecture, the data contracts between stages, and the guardrails. The scripts here only check the repo and the resume format.
 
-## Setup
+## Try it
 
-See [docs/setup.md](docs/setup.md). In short: create the Drive folders and tracker, fill in the three config templates, paste `agent/system-prompt.md` into a Claude Project's instructions, add the config docs to project knowledge, and start a chat with `MODE: SEARCH`.
+- **Read a run:** [fictional walkthrough](examples/walkthrough.md), with one search, one job thread and one application.
+- **Set it up:** [docs/setup.md](docs/setup.md). Create the Drive folders and tracker, fill in the three config templates, paste the system prompt into a Claude Project, then start a chat with `MODE: SEARCH`.
+- **Run the checks:**
+
+```bash
+bash scripts/check_privacy.sh && python3 scripts/lint_repo.py && python3 evals/check_resume_format.py evals/fixtures/resume-good.html
+```
 
 ## Results so far
 
@@ -99,10 +107,14 @@ Used across my 2026 Senior PM search for platform, API/integrations and AI produ
 
 ## Roadmap
 
-- **Job Search Lite**: a stripped-down variant: I paste a link and get fit score, ideal resume, mapping and final resume, with no tracker and no applying.
-- Scheduled, unattended search runs that write a shortlist doc and send a summary.
-- Turning the stages into installable Claude skills / a plugin.
+Proposed, not built yet (details in the [design notes](docs/design-review.md#9-prioritised-improvements)):
+
+- **Claim trace table**: every FINAL resume bullet mapped to its master-resume line or answer, so "facts only" can be checked, not just stated.
+- **`RECONCILE` command**: a read-only diff between the tracker and LinkedIn's job tracker.
+- **More golden cases**, plus a headless eval run of the skills via the plugin packaging.
+- **Job Search Lite**: paste a link and get the fit score, ideal resume, mapping and final resume, with no tracker and no applying.
+- **Scheduled, unattended search runs** that write a shortlist doc and send a summary.
 
 ## License
 
-MIT. Use the design freely; please don't use it to mass-apply or to misrepresent your experience. That's the opposite of what it's built for.
+MIT. Use the design freely, but please don't use it to mass-apply or to misrepresent your experience. That's the opposite of what it's built for.

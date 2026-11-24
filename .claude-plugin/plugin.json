@@ -1,0 +1,13 @@
+{
+  "name": "linkedin-job-search-agent",
+  "version": "0.1.0",
+  "description": "Experimental packaging of the job-search agent's stage skills (search, ideal resume, three-way tailored resume, cover letter, approval-gated apply, tracker sync, HR outreach). Needs Claude in Chrome and Google Drive/Docs/Sheets connectors; the orchestrating system prompt lives in agent/system-prompt.md.",
+  "author": {
+    "name": "Aswin A",
+    "url": "https://github.com/aswin-a"
+  },
+  "homepage": "https://github.com/aswin-a/linkedin-job-search-agent",
+  "repository": "https://github.com/aswin-a/linkedin-job-search-agent",
+  "license": "MIT",
+  "keywords": ["job-search", "resume", "human-in-the-loop", "agent-skills", "linkedin"]
+}

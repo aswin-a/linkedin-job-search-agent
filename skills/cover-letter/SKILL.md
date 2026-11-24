@@ -1,9 +1,15 @@
 ---
 name: cover-letter
-description: Write a one-page, fact-only cover letter for a job from the Master Resume, the FINAL tailored resume and the user's answers. Used by tailored-resume Step 4b, the COVER LETTER phrase, and at apply time when a form has a cover-letter field.
+description: Write a one-page, fact-only cover letter for a job from the Master Resume, the FINAL tailored resume and the user's answers. Use when tailored-resume Step 4b decides one is required, when the user says COVER LETTER, or when an application form has a cover-letter field and no letter exists yet.
 ---
 
 # Cover letter
+
+| | |
+|---|---|
+| **Inputs** | Master Resume; this job's FINAL resume; `JD.txt` / requirement IDs; the user's answers in this thread (location, availability, work mode) |
+| **Outputs** | Doc `<Company> - <Role> - Cover Letter - FINAL - <YYYY-MM-DD>` in the job folder; link in tracker `Cover letter` and the Application Record |
+| **Stop conditions** | Location, availability or work-mode fit not confirmed → ask before writing the closing paragraph. Never upload or submit it; the user exports the PDF |
 
 1. **Facts only.** One page, 300–350 words, using only the Master Resume, this job's FINAL resume (keep in step if the resume is edited) and the user's answers. No claim, number or tool beyond those.
 2. **Structure:**

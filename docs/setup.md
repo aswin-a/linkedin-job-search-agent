@@ -22,7 +22,8 @@ Create Google Docs from:
 
 ## 3. Create the Claude Project
 1. Paste [agent/system-prompt.md](../agent/system-prompt.md) into the project's custom instructions and replace the `<..._ID>` placeholders with your Drive IDs.
-2. Add to Project Knowledge: Master Resume, Search Profile, Application Answers, and the procedures (either the `skills/` files or a single "Prompts A–E" doc combining them).
+2. Add to Project Knowledge: Master Resume, Search Profile, Application Answers, and the procedures (either the `skills/` files, including `skills/tailored-resume/references/skim-formatting.md`, or a single "Prompts A–E" doc combining them).
+3. After every `UPDATE MASTER`, refresh the Master Resume in Project Knowledge too, so other threads don't keep using the old copy.
 
 ## 4. Run it
 1. New chat: `MODE: SEARCH` → shortlist lands in the tracker with kickoff messages.
