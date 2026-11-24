@@ -1,0 +1,24 @@
+name: checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Privacy check
+        run: bash scripts/check_privacy.sh
+      - name: Lint skills and links
+        run: python3 scripts/lint_repo.py
+      - name: Resume format checker (good fixture passes, bad fixture fails)
+        run: |
+          python3 evals/check_resume_format.py evals/fixtures/resume-good.html
+          if python3 evals/check_resume_format.py evals/fixtures/resume-bad.html; then
+            echo "bad fixture unexpectedly passed"; exit 1
+          fi
