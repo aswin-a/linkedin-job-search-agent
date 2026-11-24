@@ -1,0 +1,6 @@
+# Personal data: never commit
+private/
+*.pdf
+*.docx
+.env
+config/*.local.md
