@@ -126,7 +126,7 @@ What gets logged where, per job:
 This is a good audit trail for *applications*. The gaps:
 
 - **SEARCH runs leave little behind.** Skipped jobs are reported as counts in chat. **(proposed)** A one-line run summary in a `Search log` tab: date, pages opened, saved, skipped by reason.
-- **No record of the approval itself.** **(proposed)** The Application Record quotes the approval line and the `SUBMIT` message, with timestamps.
+- **No record of the approval itself.** **(done)** The Application Record now quotes the approval line and the `SUBMIT` message as sent. **(proposed)** Add timestamps for both.
 - **No per-stage cost or time numbers.** Without them I can't tell which token rules actually matter (§8).
 
 ## 8. Cost and latency
@@ -154,7 +154,7 @@ The token rules are sound and come from real use. They hit the big costs: whole-
 - [x] A deterministic format checker, plus golden cases.
 - [ ] A claim trace table in the mapping doc (try on real jobs first).
 - [ ] Decide who writes `In progress` / `Resume final` / `Saved - low fit`.
-- [ ] Approval quote and timestamps in the Application Record.
+- [x] Approval quote in the Application Record. (Timestamps not yet added.)
 
 **Could**
 

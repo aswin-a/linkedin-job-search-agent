@@ -1,15 +1,21 @@
 ---
 name: tailored-resume
-description: Three-way mapping of Ideal Resume x Master Resume x JD, targeted gap questions, then a FINAL tailored resume that is true, ATS-safe and skim-friendly, plus cover-letter decision, fit check and 10 interview questions. Steps 3-5 of the MODE: JOB pipeline.
+description: Three-way mapping of Ideal Resume x Master Resume x JD, targeted gap questions, then a FINAL tailored resume that is true, ATS-safe and skim-friendly, plus the cover-letter decision, fit check and 10 likely interview questions. Use when a MODE: JOB thread has an Ideal Resume (pipeline steps 3-5), when the user answers gap questions, or when they request changes to the FINAL resume.
 ---
 
 # Prompt D: Customized resume (three-way mapping)
+
+| | |
+|---|---|
+| **Inputs** | Master Resume (Project Knowledge; re-read from Drive only after `UPDATE MASTER`); this thread's Ideal Resume + requirement IDs; `JD.txt`; the user's answers in this thread; the Change Log (to avoid re-asking) |
+| **Outputs** | Doc `Mapping and Gap Questions`; gap questions in chat (0–8); proposed master additions (numbered); Doc `Customized Resume - FINAL`; cover letter via **cover-letter** if required; tracker `Customized resume`, `Cover letter`, `Likely interview questions`; apply kickoff in chat |
+| **Stop conditions** | After Step 2 if any gap question was asked: **wait for answers**. Never edit the Master Resume until `UPDATE MASTER`. Never apply: the run ends at the apply kickoff |
 
 Act as an expert resume strategist and ATS specialist. Three sources, each with one job:
 
 | Source | Truth for |
 |---|---|
-| **Master Resume** (Project Knowledge; re-read from Drive only after `UPDATE MASTER`) | FACTS |
+| **Master Resume** | FACTS |
 | **Ideal Resume** from this thread | WORDING, STRUCTURE, KEYWORDS, FORMAT |
 | **JD.txt** | PRIORITIES |
 
@@ -19,7 +25,7 @@ Act as an expert resume strategist and ATS specialist. Three sources, each with 
 - Never copy master-resume text; carry its meaning into the ideal resume's wording.
 - Where the JD and ideal resume use different terms for the same thing, use the JD's term if the experience supports it.
 - Never invent experience, tools, metrics or responsibilities; every claim must trace to the master resume or the user's answers. Never add a JD keyword without real experience behind it.
-- ATS-safe: standard headings and bullets; no tables, columns or graphics; bold only as SKIM-FRIENDLY FORMATTING allows.
+- ATS-safe: standard headings and bullets; no tables, columns or graphics; bold only as [skim-friendly formatting](references/skim-formatting.md) allows.
 
 ## Step 0: JD analysis
 Reuse the ideal-resume analysis and requirement IDs. Add only what's missing: top 15–20 ATS keywords ranked, key responsibilities and valued outcomes, hidden expectations (ownership, stakeholders, scale), and where the ideal resume's emphasis differs from the JD.
@@ -51,24 +57,7 @@ Write once, as FINAL. Run the Step 5 checks before saving.
 - Ideal resume's wording, structure and keywords, filled with verified experience; JD terms where supported
 - Most JD-relevant points first in each role; unsupported/low-relevance points removed (one-line note)
 - Partial matches worded truthfully; no requirement-ID tags; real header details from the master
-
-### Skim-friendly formatting
-Goal: a recruiter reading only the **bold text, job titles and each role's first bullet** sees within 10 seconds that the candidate meets the top must-haves. Bold points to proof; it never adds content.
-
-**Bold:**
-- At most one 2–6 word phrase per bullet, preferably the quantified result that proves a must-have (e.g. "…holding **99.5% uptime**").
-- Only bullets that map to a must-have or top-5 keyword: about half per role, never all.
-- Summary: ≤ 2 phrases. Name bold. Role lines: title bold, company/dates regular. Section headings bold.
-- ~8–14 bold phrases in total.
-
-**Never bold:** whole bullets, >1 phrase per bullet, Core Skills, Education, Certifications, dates, company names, contact details, soft words ("strong", "cross-functional", "stakeholders", "team", "successfully"), or anything unsupported. Bold is the only emphasis: no italics, underline, colour, caps or symbols.
-
-**Skim order:** summary line 1 mirrors the JD's title and seniority (as far as true), then years and domain. Each role leads with the bullet matching the #1 must-have. Bullets: verb first, 1–2 lines, numerals, one idea each. Recent roles 4–6 bullets; older 2–3. Single column; dates after ` | `.
-
-### Basic formatting only
-- Create the Doc in **one** Drive create call from simple HTML: `<h1>` name, `<p>` contact, `<h2>` sections, `<p>` role lines with `<b>` title, `<ul><li>` bullets, `<b>` skim phrases. No CSS, fonts, spacing or page settings.
-- Don't restyle, read back, preview, screenshot or export.
-- Length by word count: ~450–550 words per page.
+- Formatting, bolding, skim order and HTML structure: follow [references/skim-formatting.md](references/skim-formatting.md) exactly.
 
 Save as `<Company> - <Role> - Customized Resume - FINAL - <date>`.
 
@@ -81,3 +70,6 @@ Save as `<Company> - <Role> - Customized Resume - FINAL - <date>`.
 - Skim test: every bold phrase maps to a requirement ID (remove any that don't); bold + titles + first bullets alone show the top 3 must-haves, else fix.
 - Write **10 likely interview questions** to the tracker's `Likely interview questions` column: must-haves, gaps and stretches, claims an interviewer would probe (metrics, decisions, trade-offs), logistics. Update if the resume changes.
 - End with: file links, JD match, missing keywords, which question numbers hit the thinnest spots, and the **apply kickoff** in a code block (see [agent/commands.md](../../agent/commands.md)).
+
+## Change requests (pipeline step 6)
+Edit the FINAL Doc in place with targeted text replacements; keep the cover letter and interview questions in step; reply with only what changed. Any edit made after `APPROVED TO APPLY` disarms the gate: the user must approve again.
